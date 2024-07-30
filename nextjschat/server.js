@@ -6,7 +6,7 @@ import cors from 'cors';
 const app = express();
 
 const corsOptions = {
-  origin: ['http://129.161.81.209:3000'], // Add your frontend's IP and port here
+  origin: ['http://129.161.81.209:3000'],
   methods: ['GET', 'POST'],
   credentials: true
 };
@@ -16,21 +16,33 @@ app.use(cors(corsOptions));
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://129.161.81.209:3000'], // Same as above
+    origin: ['http://129.161.81.209:3000'], 
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
+const clients = {};
+
 io.on('connection', (socket) => {
   console.log('New client connected');
 
+  socket.on('setUsername', (username) => {
+    clients[socket.id] = { username, socket };
+    console.log(`Client connected: ${socket.id}, Username: ${username}`);
+  });
+
   socket.on('sendMessage', (message) => {
-    io.emit('receiveMessage', message);
+    const user = clients[socket.id];
+    if (user) {
+      const fullMessage = `${user.username}: ${message}`;
+      io.emit('receiveMessage', fullMessage);
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    console.log('Client disconnected:', socket.id);
+    delete clients[socket.id]; // Remove the client from the dictionary
   });
 });
 
