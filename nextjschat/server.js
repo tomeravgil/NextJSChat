@@ -1,85 +1,38 @@
+import express from 'express';
 import { createServer } from 'http';
-import { parse } from 'url';
-import next from 'next';
-import { WebSocketServer } from 'ws';
+import { Server } from 'socket.io';
+import cors from 'cors';
 
-const app = next({ dev: true });
-const handle = app.getRequestHandler();
-const userMap = new Map();
+const app = express();
 
-app.prepare().then(() => {
-  const server = createServer((req, res) => {
-    if (req.url) {
-      const parsedUrl = parse(req.url, true);
-      handle(req, res, parsedUrl);
-    }
+const corsOptions = {
+  origin: ['http://129.161.81.209:3000'], // Add your frontend's IP and port here
+  methods: ['GET', 'POST'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ['http://129.161.81.209:3000'], // Same as above
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  socket.on('sendMessage', (message) => {
+    io.emit('receiveMessage', message);
   });
 
-  const wss = new WebSocketServer({ port: 8080 });
-
-  wss.on('connection', (ws) => {
-    console.log('Client connected');
-
-    ws.on('message', (message) => {
-      console.log('received: %s', message);
-      const vals = process(ws, JSON.parse(message));
-      console.log('sending: ' + vals);
-      if (vals) {
-        ws.send(vals);
-      }
-    });
-
-    ws.on('close', () => {
-      userMap.delete(ws);
-      console.log('Client disconnected');
-    });
-  });
-
-  server.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
-  });
-
-  server.on('error', (err) => {
-    console.error('Server error:', err);
-  });
-
-  server.listen(3000, () => {
-    console.log('> Ready on http://localhost:3000');
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
   });
 });
 
-function process(ws, args) {
-  if (args[0] == 'chat') {
-    const user = userMap.get(ws);
-    const chatValues = {
-      email: user,
-      message: args[1],
-      time: Date.now(),
-    };
-    return JSON.stringify(chatValues);
-  }
-
-  if (args[0] == 'config') {
-    const user = args[1];
-    userMap.set(ws, user);
-    const configValues = {
-      email: user,
-      time: Date.now(),
-    };
-    return JSON.stringify(configValues);
-  }
-
-  if (args[0] == 'quit') {
-    const user = userMap.get(ws);
-    const quitTime = {
-      email: user,
-      quit: true,
-      time: Date.now(),
-    };
-    return JSON.stringify(quitTime);
-  }
-
-  return null;
-}
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
