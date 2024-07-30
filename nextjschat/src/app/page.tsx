@@ -1,113 +1,101 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useRef, useState } from 'react';
 
-export default function Home() {
+const Home: React.FC = () => {
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const socket = useRef<WebSocket | null>(null);
+  const [setupMessage, setSetupMessage] = useState("");
+  const [serverActions, setServerActions] = useState("");
+  const [setup, setSetup] = useState(true);
+  const [email, setEmail] = useState('');
+  const [messages, setMessages] = useState([]);
+  const handleEmailChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEmail(event.target.value);
+  };
+
+  useEffect(() => {
+    // Ensure correct WebSocket connection port
+    const ws = new WebSocket('ws://localhost:8080');
+
+    socket.current = ws;
+
+    ws.onopen = () => {
+      console.log('WebSocket Client Connected');
+      // ws.send('Hi this is web client');
+    };
+
+    ws.onmessage = (message) => {
+      console.log('Received message from server:', message.data);
+      const values = JSON.parse(message.data);
+      console.log(Object.keys(values).length);
+      if (Object.keys(values).length == 2){
+        setSetupMessage("Hello " + values.email + "!");
+      }
+      if (values.hasOwnProperty('message')){
+        setMessages((prevMessages: any) => [...prevMessages, values]);
+      }
+      else {
+        setServerActions(message.data);
+      }
+    };
+
+    ws.onclose = (event) => {
+      console.log(`WebSocket Client Disconnected: ${event.code} - ${event.reason}`);
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (textAreaRef.current && socket.current && socket.current.readyState === WebSocket.OPEN) {
+      const message = textAreaRef.current.value;
+      console.log('Sending message:', message);
+      socket.current.send(JSON.stringify(["chat",message]));
+    }
+  };
+
+  const setupProtocol = () => {
+    setSetup(false);
+    if (socket.current && socket.current.readyState === WebSocket.OPEN) {
+      const configMessage = JSON.stringify(["config", email]);
+      console.log('Sending config message:', configMessage);
+      socket.current.send(configMessage);
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className='bg-white'>
+      <h1>{setupMessage}</h1>
+      <h1>{serverActions}</h1>
+      <p>Open the console to see WebSocket messages.</p>
+      {setup && (
+        <div>
+          <textarea
+            id="email"
+            value={email}
+            onChange={handleEmailChange}
+            placeholder="Enter your email"
+          ></textarea>
+          <button onClick={setupProtocol}>Enter Chat</button>
         </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      )}
+      {messages.map((msg:any, index:any) => (
+          <div key={index} className="message">
+            <span className="message-email">{msg.email}:</span>
+            <span className="message-content">{msg.message}</span>
+            <span className="message-time">{new Date(msg.time).toLocaleTimeString()}</span>
+          </div>
+        ))}
+      <textarea ref={textAreaRef} className="text-black" placeholder="Type your message here..."></textarea>
+      <button onClick={sendMessage}>Send Message</button>
+    </div>
   );
-}
+};
+
+export default Home;
