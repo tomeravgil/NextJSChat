@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.scroll-hidden::-webkit-scrollbar {
+    width: 0; /* Remove scrollbar space */
+    background: transparent; /* Optional: just to be sure */
+  }
+  
+  .scroll-hidden {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scroll-visible:hover {
+    overflow-y: auto; /* Show scrollbar on hover */
+  }
+  
+  .scroll-visible:focus {
+    overflow-y: auto; /* Show scrollbar on focus */
+  }
+  
