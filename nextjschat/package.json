@@ -4,16 +4,22 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev -H $HOST -p $PORT",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "server": "node server.js",
     "lint": "next lint"
   },
   "dependencies": {
+    "@nextui-org/avatar": "^2.0.32",
+    "@nextui-org/card": "^2.0.33",
+    "@nextui-org/system": "^2.2.5",
+    "@nextui-org/theme": "^2.2.9",
+    "autoprefixer": "^10.4.19",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "framer-motion": "^11.3.19",
     "http-proxy-middleware": "^3.0.0",
     "next": "^14.2.5",
     "react": "^18.3.1",

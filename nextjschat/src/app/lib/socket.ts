@@ -1,5 +1,12 @@
 import { io } from 'socket.io-client';
 
-const socket = io('http://129.161.81.209:4000'); // Use the actual IP address
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000';
+
+const socket = io(SERVER_URL, {
+  withCredentials: true,
+  extraHeaders: {
+    'my-custom-header': 'abcd'
+  }
+});
 
 export default socket;

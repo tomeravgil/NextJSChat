@@ -6,7 +6,7 @@ import cors from 'cors';
 const app = express();
 
 const corsOptions = {
-  origin: ['http://129.161.81.209:3000'],
+  origin: ['http://128.113.230.166:3000'],
   methods: ['GET', 'POST'],
   credentials: true
 };
@@ -16,7 +16,7 @@ app.use(cors(corsOptions));
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://129.161.81.209:3000'], 
+    origin: ['http://128.113.230.166:3000'], 
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -35,13 +35,25 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', (message) => {
     const user = clients[socket.id];
     if (user) {
-      const fullMessage = `${user.username}: ${message}`;
-      io.emit('receiveMessage', fullMessage);
+      const fullMessage = {
+        username: user.username,
+        message: message
+      };
+      const jsonString = JSON.stringify(fullMessage);
+      io.emit('receiveMessage', jsonString);
     }
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
+    const user = clients[socket.id];
+    if (user) {
+      const disconnectMessage = JSON.stringify({
+        username: user.username,
+        message: 'has disconnected'
+      });
+      socket.broadcast.emit('clientDisconnected', disconnectMessage);
+    }
     delete clients[socket.id]; // Remove the client from the dictionary
   });
 });
