@@ -69,7 +69,7 @@ const Home = () => {
   };
 
   return (
-    <div >
+    <div className='overflow-hidden'>
       {!isUsernameSet ? (
         <div >
           <input
@@ -82,7 +82,7 @@ const Home = () => {
           <button onClick={handleSetUsername} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Set Username</button>
         </div>
       ) : (
-        <div className='flex flex-row'>
+        <div className='flex flex-row bg-gray-50'>
           <UserList/>
           <div className="flex flex-col justify-between h-screen w-full p-4 border-l-2 border-black ">
 
@@ -123,7 +123,7 @@ export default Home;
 
 
 const ListboxWrapper = ({children}: any) => (
-  <div className="w-auto h-full m-5">
+  <div className="w-1/6 m-5 mr-0 h-[calc(100vh-2.5rem)] overflow-y-scroll scroll-hidden">
     {children}
   </div>
 );
@@ -132,8 +132,8 @@ const UserList = () => (
   <ListboxWrapper>
     <Listbox
       classNames={{
-        base: "max-w-xs",
-        list: "h-screen scroll-hidden scroll-visible",
+
+        list: "h-[calc(100vh-2.5rem)]",
       }}
       items={users}
       selectionMode="single"
